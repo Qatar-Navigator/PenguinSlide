@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, Dimensions, ScrollView, Text} from 'react-native';
+import {View, StyleSheet, Dimensions, Text} from 'react-native';
 import {
   gestureHandlerRootHOC,
   PanGestureHandler,
@@ -25,53 +25,56 @@ const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 const {UP, DOWN, NON} = constants;
 
 export default gestureHandlerRootHOC(function Slider({items}) {
-  const up = useVector(0, 0);
-  const down = useVector(0, 0);
+  const position = useVector(0, 0);
 
-  const isTransitioningUp = useSharedValue(false);
-  const isTransitioningDown = useSharedValue(false);
-  const activeSide = useSharedValue(NON);
+  const isTransitioningUp = useSharedValue(false); // to decide the spring config
+  const activate = useSharedValue(false); // to control the positions where gesture is allowed
+  const [isUp, setIsUp] = useState(false); // to detect if the the up swipe is completed
 
   const onGestureEvent = useAnimatedGestureHandler({
-    onStart: ({x, y}) => {
-      if (y < HEIGHT / 2) {
-        activeSide.value = UP;
-      } else if (y > HEIGHT / 2) {
-        activeSide.value = DOWN;
+    onStart({y}) {
+      console.log('is up? ', isUp);
+      if (y > CURVE_HIGHT && !isUp) {
+        activate.value = true;
+        console.log('Activate Area');
+      } else if (y < 100 && isUp) {
+        activate.value = true;
+        console.log('Activate Area');
       } else {
-        activeSide.value = NON;
+        activate.value = false;
+        console.log('Not Activate Area');
       }
     },
     onActive: ({x, y}) => {
-      down.y.value = CURVE_HIGHT - y;
-      down.x.value = x;
-      // console.log('Down');
+      if (activate.value) {
+        position.y.value = CURVE_HIGHT - y;
+        position.x.value = x;
+      }
     },
     onEnd: ({y, velocityX, velocityY}) => {
-      const snapPoints = [HEIGHT - MIN_LEDGE, CURVE_HIGHT];
-      const dest = snapPoint(y, velocityY, snapPoints);
-      isTransitioningDown.value = dest === 0;
-      down.y.value = withSpring(CURVE_HIGHT - dest, {
-        velocity: velocityY,
-        overshootClamping: isTransitioningDown.value,
-        restSpeedThreshold: isTransitioningDown.value ? 100 : 0.01,
-        restDisplacementThreshold: isTransitioningDown.value ? 100 : 0.01,
-      });
+      if (activate.value) {
+        const snapPoints = [0, CURVE_HIGHT];
+        const dest = snapPoint(y, velocityY, snapPoints);
+        isTransitioningUp.value = dest === 0;
+
+        if (dest === 0) {
+          runOnJS(setIsUp)(true);
+        } else if (dest === CURVE_HIGHT) {
+          runOnJS(setIsUp)(false);
+        }
+
+        position.y.value = withSpring(CURVE_HIGHT - dest, {
+          velocity: velocityY,
+          overshootClamping: isTransitioningUp.value,
+          restSpeedThreshold: isTransitioningUp.value ? 100 : 0.01,
+          restDisplacementThreshold: isTransitioningUp.value ? 100 : 0.01,
+        });
+      }
     },
   });
 
-  // ToDO: use this to spring back the curve.
-  useEffect(() => {
-    // up.y.value = withSpring(MARGIN_HIGHT - MIN_LEDGE);
-    // down.y.value = withSpring(MARGIN_HIGHT - MIN_LEDGE);
-  }, [down.y, up.y]);
-
   const upStyle = useAnimatedStyle(() => ({
     zIndex: 100,
-  }));
-
-  const scrollStyle = useAnimatedStyle(() => ({
-    marginTop: CURVE_HIGHT + 100 - down.y.value,
   }));
 
   /**
@@ -79,16 +82,20 @@ export default gestureHandlerRootHOC(function Slider({items}) {
    *  and `Animated.View` should be used
    */
   return (
-    <PanGestureHandler onGestureEvent={onGestureEvent} enabled={true}>
+    <PanGestureHandler
+      onGestureEvent={onGestureEvent}
+      // Set activeOffsetY to [0, CURVE_HIGHT] => allows only up transition
+      // Set activeOffsetY to [ -CURVE_HIGHT, 0] => allows only Down transition
+      activeOffsetY={isUp ? [-CURVE_HIGHT, 0] : [0, CURVE_HIGHT]}>
       <Animated.View style={[StyleSheet.absoluteFill]}>
         <Penguin width={WIDTH} height={HEIGHT} />
         <Animated.View style={[StyleSheet.absoluteFill]}>
           <Animated.View style={upStyle}>
-            <PenguinSvg position={down} />
+            <PenguinSvg position={position} />
           </Animated.View>
-          <Wave position={down}>
+          <Wave position={position}>
             <Animated.View style={styles.body}>
-              <Scroll items={items} position={down} />
+              <Scroll items={items} position={position} />
             </Animated.View>
           </Wave>
         </Animated.View>

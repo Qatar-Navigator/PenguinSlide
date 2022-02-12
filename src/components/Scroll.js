@@ -1,9 +1,13 @@
 import React from 'react';
 import {View, StyleSheet, Text} from 'react-native';
 import Animated, {useAnimatedStyle} from 'react-native-reanimated';
+
+import {ScrollView} from 'react-native-gesture-handler';
 import Card from './Card';
 
 import {CURVE_HIGHT} from './Wave';
+
+export const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
 export default function Scroll({position, items}) {
   const scrollStyle = useAnimatedStyle(() => ({
