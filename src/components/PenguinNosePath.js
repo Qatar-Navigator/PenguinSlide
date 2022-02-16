@@ -1,24 +1,13 @@
 import React from 'react';
-import {View, StyleSheet, Dimensions} from 'react-native';
+import {Dimensions, View} from 'react-native';
 import Animated, {useAnimatedProps} from 'react-native-reanimated';
 import {Path} from 'react-native-svg';
-import {PENGUIN_WIDTH, CURVE_HIGHT} from './Wave';
+
+// import {CURVE_HIGHT} from './Wave';
+import {relativeCurve, vec2} from '../vector';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
-
-const ratio = 2.5;
-
-const disX = WIDTH / 2;
-
-const vec2 = (x, y) => {
-  'worklet';
-  return {x: x, y: y};
-};
-
-const curve = (c1, c2, to) => {
-  'worklet';
-  return `c ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${to.x} ${to.y}`;
-};
+const CURVE_HIGHT = (HEIGHT / 2) * 1.356;
 
 export const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -28,21 +17,21 @@ export default function PenguinNosePath({position}) {
     const m = vec2((WIDTH / 2) * 1.1, CURVE_HIGHT * 1.09 - position.y.value);
 
     //c -10.5575 3.0202 -21.7766 3.0278 -32.3417 0.0302
-    const c1 = curve(
+    const c1 = relativeCurve(
       vec2(-10.5575, 3.0202),
       vec2(-21.7766, 3.0278),
       vec2(-32.3417, 0.0302),
     );
 
     //c -23.368 -6.6226 -63.9803 -22.7443 -65.5906 -55.0406
-    const c2 = curve(
+    const c2 = relativeCurve(
       vec2(-23.368, -6.6226),
       vec2(-63.9803, -22.7443),
       vec2(-65.5906, -55.0406),
     );
 
     //c -1.5158 -30.361 81.7652 -27.1669 81.7652 -27.1669
-    const c3 = curve(
+    const c3 = relativeCurve(
       vec2(-1.5158, -30.361),
       vec2(81.7652, -27.1669),
       vec2(81.7652, -27.1669),
@@ -52,14 +41,14 @@ export default function PenguinNosePath({position}) {
     const h = -0.5519;
 
     //c 0 0 83.2772 -3.1979 81.7652 27.1669
-    const c4 = curve(
+    const c4 = relativeCurve(
       vec2(0, 0),
       vec2(83.2772, -3.1979),
       vec2(81.7652, 27.1669),
     );
 
     //c -1.6141 32.2472 -41.8219 48.3651 -65.0462 55.0103
-    const c5 = curve(
+    const c5 = relativeCurve(
       vec2(-1.6141, 32.2472),
       vec2(-41.8219, 48.3651),
       vec2(-65.0462, 55.0103),
@@ -73,6 +62,7 @@ export default function PenguinNosePath({position}) {
       `h ${h}`,
       `${c4}`,
       `${c5}`,
+      'Z',
     ].join(' ');
 
     return {
@@ -80,19 +70,8 @@ export default function PenguinNosePath({position}) {
     };
   });
 
-  return (
-    <View style={styles.container}>
-      <AnimatedPath fill="#FFC629" animatedProps={animatedProps} />
-    </View>
-  );
+  return <AnimatedPath fill="#FFC629" animatedProps={animatedProps} />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: '10%',
-    height: '10%',
-  },
-});
 
 //M 225 615 c -10.5575 3.0202 -21.7766 3.0278 -32.3417 0.0302 c -23.368 -6.6226 -63.9803 -22.7443 -65.5906 -55.0406 c -1.5158 -30.361 81.7652 -27.1669 81.7652 -27.1669 h -0.5519 c 0 0 83.2772 -3.1979 81.7652 27.1669 c -1.6141 32.2472 -41.8219 48.3651 -65.0462 55.0103 z
 

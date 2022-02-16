@@ -1,10 +1,8 @@
 import React from 'react';
-import {View, StyleSheet, Text} from 'react-native';
-import SVG, {Path} from 'react-native-svg';
-import Card from './src/components/Card';
-import Scroll from './src/components/Scroll';
-import Slider from './src/components/Slider';
-import Slider2 from './src/components/Slider2';
+import {View, StyleSheet, Dimensions} from 'react-native';
+import Card from './Card';
+
+const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
 const items = [
   {
@@ -49,30 +47,21 @@ const items = [
   },
 ];
 
-export default function App(params) {
+export default function MomentList(params) {
   return (
     <View style={styles.container}>
-      <Slider items={items} />
-      {/* <Slider items={items} /> */}
-      {/* <Scroll items={items} /> */}
+      {items.map((item, index) => (
+        <Card key={index} title={item.title} description={item.description} />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: 'black',
-  },
-  card: {
-    width: '90%',
-    borderColor: 'black',
-    borderWidth: 1,
-    borderRadius: 50,
-    padding: 20,
-  },
-  text: {
-    color: 'black',
-    marginBottom: 10,
+    paddingVertical: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
   },
 });

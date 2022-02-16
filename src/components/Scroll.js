@@ -1,31 +1,46 @@
 import React from 'react';
-import {View, StyleSheet, Text} from 'react-native';
+import {View, StyleSheet, ScrollView} from 'react-native';
 import Animated, {useAnimatedStyle} from 'react-native-reanimated';
 
-import {ScrollView} from 'react-native-gesture-handler';
+import {NativeViewGestureHandler} from 'react-native-gesture-handler';
 import Card from './Card';
 
 import {CURVE_HIGHT} from './Wave';
 
 export const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
-export default function Scroll({position, items}) {
+export default React.forwardRef(function Scroll(
+  {position, items, offsetY, simultaneousHandlers},
+  ref,
+) {
   const scrollStyle = useAnimatedStyle(() => ({
     marginTop: CURVE_HIGHT + 100 - position.y.value,
   }));
 
+  const onScroll = () => {
+    console.log('Trying to Scroll');
+  };
+
   return (
-    <Animated.ScrollView
-      style={[{width: '100%'}, scrollStyle]}
-      onScroll={() => console.log('Scrolling')}>
-      <View style={styles.scrollContainer}>
-        {items.map((item, index) => (
-          <Card key={index} title={item.title} description={item.description} />
-        ))}
-      </View>
-    </Animated.ScrollView>
+    <NativeViewGestureHandler
+      ref={ref}
+      simultaneousHandlers={simultaneousHandlers}>
+      <Animated.ScrollView
+        style={[styles.scrollView, scrollStyle]}
+        onScroll={onScroll}>
+        <View style={styles.scrollContainer}>
+          {items.map((item, index) => (
+            <Card
+              key={index}
+              title={item.title}
+              description={item.description}
+            />
+          ))}
+        </View>
+      </Animated.ScrollView>
+    </NativeViewGestureHandler>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {},
@@ -34,5 +49,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  scrollView: {
+    width: '100%',
+    backgroundColor: 'white',
   },
 });

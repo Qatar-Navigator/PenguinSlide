@@ -1,46 +1,24 @@
 import React from 'react';
-import {View, StyleSheet, Dimensions, Text, Platform} from 'react-native';
-import MaskedView from '@react-native-community/masked-view';
-import Animated, {useAnimatedProps} from 'react-native-reanimated';
-import Svg, {Path} from 'react-native-svg';
-
-import Penguin from '../assets/penguin.svg';
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+import {View, StyleSheet, Dimensions} from 'react-native';
+import Animated, {useAnimatedStyle} from 'react-native-reanimated';
+import {useVector} from 'react-native-redash';
+import PenguinSvg from './PenguinSvg';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
-export default function Header() {
-  const animatedProps = useAnimatedProps(() => {
-    return {
-      d: [`M 0 ${HEIGHT / 2}`, `H ${WIDTH}`, `V ${HEIGHT}`, `H 0`, `Z`].join(
-        ' ',
-      ),
-    };
-  });
-
-  const maskElement = (
-    <Svg style={[StyleSheet.absoluteFill]}>
-      <AnimatedPath fill="white" animatedProps={animatedProps} />
-    </Svg>
-  );
+export default function Header({position}) {
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: HEIGHT * 0.75 - position.y.value,
+    // backgroundColor: 'black',
+    // position: 'absolute',
+    // top: 0,
+    // left: 0,
+    // zIndex: 1,
+  }));
 
   return (
-    <MaskedView
-      style={[StyleSheet.absoluteFill, {flex: 1}]}
-      maskElement={maskElement}>
-      <Text>Hello </Text>
-    </MaskedView>
+    <Animated.View style={[animatedStyle]}>
+      <PenguinSvg position={position} />
+    </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {},
-});
-
-/**
- *       { <View>
-        <Penguin width={WIDTH} height={HEIGHT} />
-      </View> 
-    // </MaskedView>
- */

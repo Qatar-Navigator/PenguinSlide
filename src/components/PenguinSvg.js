@@ -1,11 +1,18 @@
-import React from 'react';
-import {View, StyleSheet, Dimensions} from 'react-native';
-import Animated, {useAnimatedProps} from 'react-native-reanimated';
-import Svg, {Ellipse, Path} from 'react-native-svg';
+import React, {useEffect} from 'react';
+import {Dimensions} from 'react-native';
+import Animated, {
+  useAnimatedProps,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import Svg, {Ellipse} from 'react-native-svg';
+// import BlinkPath from './BlinkPath';
 import PenguinNosePath from './PenguinNosePath';
-import Wave, {CURVE_WIDTH, CURVE_HIGHT} from './Wave';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
+
+export const CURVE_HIGHT = (HEIGHT / 2) * 1.356;
+export const CURVE_WIDTH = WIDTH / 2;
 
 const eayRX = WIDTH * 0.12;
 const eayRy = HEIGHT * 0.074;
@@ -20,20 +27,15 @@ const INNER_EAY_MARGIN_Y = 95;
 
 export const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 
-const vec2 = (x, y) => {
-  'worklet';
-  return {x: x, y: y};
-};
+const BLINK_STEP = 4;
+const BLINK_MIN = 0;
+const BLINK_MAX = 135;
+// var intervalId;
 
-const curve = (c1, c2, to) => {
-  'worklet';
-  return `C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${to.x} ${to.y}`;
-};
-
-export default function PenguinSvg({position}) {
-  console.log('With:', WIDTH, 'Height: ', HEIGHT);
+export default function PenguinSvg({position, blinkPosition}) {
+  console.log('Width:', WIDTH, 'Height: ', HEIGHT);
   // right eay
-  const animatedProps1 = useAnimatedProps(() => {
+  const rightWhite = useAnimatedProps(() => {
     return {
       cx: `${CURVE_WIDTH + EAY_MARGIN_X}`,
       cy: `${CURVE_HIGHT - EAY_MARGIN_Y - position.y.value}`,
@@ -41,7 +43,7 @@ export default function PenguinSvg({position}) {
       ry: `${eayRy}`,
     };
   });
-  const animatedProps2 = useAnimatedProps(() => {
+  const rightIris = useAnimatedProps(() => {
     return {
       cx: `${CURVE_WIDTH + INNER_EAY_MARGIN_X}`,
       cy: `${CURVE_HIGHT - INNER_EAY_MARGIN_Y - position.y.value}`,
@@ -51,7 +53,7 @@ export default function PenguinSvg({position}) {
   });
 
   // left eay
-  const animatedProps3 = useAnimatedProps(() => {
+  const leftWhite = useAnimatedProps(() => {
     return {
       cx: `${CURVE_WIDTH - EAY_MARGIN_X}`,
       cy: `${CURVE_HIGHT - EAY_MARGIN_Y - position.y.value}`,
@@ -59,7 +61,7 @@ export default function PenguinSvg({position}) {
       ry: `${eayRy}`,
     };
   });
-  const animatedProps4 = useAnimatedProps(() => {
+  const leftIris = useAnimatedProps(() => {
     return {
       cx: `${CURVE_WIDTH - INNER_EAY_MARGIN_X}`,
       cy: `${CURVE_HIGHT - INNER_EAY_MARGIN_Y - position.y.value}`,
@@ -68,17 +70,61 @@ export default function PenguinSvg({position}) {
     };
   });
 
+  const rightEyelids = useAnimatedProps(() => {
+    return {
+      cx: `${CURVE_WIDTH + EAY_MARGIN_X}`,
+      cy: `${
+        CURVE_HIGHT - EAY_MARGIN_Y - blinkPosition.value - position.y.value
+      }`,
+      rx: `${eayRX + 50}`,
+      ry: `${eayRy + 10}`,
+    };
+  });
+  const leftEyelids = useAnimatedProps(() => {
+    return {
+      cx: `${CURVE_WIDTH - EAY_MARGIN_X}`,
+      cy: `${
+        CURVE_HIGHT - EAY_MARGIN_Y - blinkPosition.value - position.y.value
+      }`,
+      rx: `${eayRX + 50}`,
+      ry: `${eayRy + 10}`,
+    };
+  });
+
+  const blink = () => {
+    blinkPosition.value = withSpring(
+      blinkPosition.value ? BLINK_MIN : BLINK_MAX,
+      {
+        // velocity: 100,
+        overshootClamping: true,
+        restDisplacementThreshold: 0.01,
+        restSpeedThreshold: 0.01,
+      },
+    );
+    console.log('Blinking');
+  };
+
+  useEffect(() => {
+    blink();
+    setTimeout(blink, 500);
+    var intervalId = setInterval(() => {
+      blink();
+      setTimeout(blink, 500);
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
-    <Svg>
-      <AnimatedEllipse animatedProps={animatedProps1} fill="white" />
-      <AnimatedEllipse animatedProps={animatedProps2} fill="black" />
-      <AnimatedEllipse animatedProps={animatedProps3} fill="white" />
-      <AnimatedEllipse animatedProps={animatedProps4} fill="black" />
+    <Svg style={{backgroundColor: 'transparent'}}>
+      <AnimatedEllipse animatedProps={rightWhite} fill="white" />
+      <AnimatedEllipse animatedProps={rightEyelids} fill="black" />
+      <AnimatedEllipse animatedProps={rightIris} fill="black" />
+      <AnimatedEllipse animatedProps={leftWhite} fill="white" />
+      <AnimatedEllipse animatedProps={leftEyelids} fill="black" />
+      <AnimatedEllipse animatedProps={leftIris} fill="black" />
       <PenguinNosePath position={position} />
+      {/* <BlinkPath /> */}
     </Svg>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {},
-});

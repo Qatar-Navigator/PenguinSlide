@@ -2,9 +2,15 @@ import React from 'react';
 import {StyleSheet, Dimensions, View} from 'react-native';
 import MaskedView from '@react-native-community/masked-view';
 import Animated, {useAnimatedProps} from 'react-native-reanimated';
-import Svg, {Circle, Ellipse, Path} from 'react-native-svg';
-import {clamp} from 'react-native-redash';
+import Svg, {Path} from 'react-native-svg';
+
 import constants from '../config/constants';
+import {curve, vec2} from '../vector';
+import Header from './Header';
+import PenguinNosePath from './PenguinNosePath';
+// import PenguinSvg from './PenguinSvg';
+// import Header from './Header';
+
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
 export const MIN_LEDGE = HEIGHT;
@@ -18,15 +24,15 @@ export const PENGUIN_WIDTH = WIDTH - WIDTH_PADDING;
 
 export const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const vec2 = (x, y) => {
-  'worklet';
-  return {x: x, y: y};
-};
+// const vec2 = (x, y) => {
+//   'worklet';
+//   return {x: x, y: y};
+// };
 
-const curve = (c1, c2, to) => {
-  'worklet';
-  return `C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${to.x} ${to.y}`;
-};
+// const curve = (c1, c2, to) => {
+//   'worklet';
+//   return `C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${to.x} ${to.y}`;
+// };
 
 // const findMin = (val1, val2) => {
 //   if (val1 < val2) {
@@ -38,9 +44,6 @@ const curve = (c1, c2, to) => {
 // };
 
 export default function Wave({side, position, children, isTransitioning}) {
-  // const cStep = clamp(position.y.value, 0, HEIGHT / 2);
-  const cStep = Math.min(position.y.value, 0, HEIGHT / 4);
-
   const animatedProps = useAnimatedProps(() => {
     // vector points
     const p1 = vec2(CURVE_WIDTH, CURVE_HIGHT - position.y.value);
@@ -73,7 +76,7 @@ export default function Wave({side, position, children, isTransitioning}) {
         `H ${WIDTH_PADDING}`,
         `L 5 ${p2.y}`,
         curve(cpl2, cpl1, p1),
-        `Z`,
+        'Z',
       ].join(' '),
     };
   });
@@ -83,9 +86,12 @@ export default function Wave({side, position, children, isTransitioning}) {
       style={[
         StyleSheet.absoluteFill,
         {
+          backgroundColor: 'transparent',
           transform: [{rotateX: position === constants.UP ? '180deg' : '0deg'}],
         },
       ]}>
+      {/* <Header position={position} /> */}
+
       <AnimatedPath fill="white" animatedProps={animatedProps} />
     </Svg>
   );
@@ -95,12 +101,3 @@ export default function Wave({side, position, children, isTransitioning}) {
     </MaskedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: 'white',
-    flex: 1,
-    height: HEIGHT,
-    width: WIDTH,
-  },
-});
